@@ -77,6 +77,7 @@ if __name__ == '__main__':
     # Sprite groups
     all_sprites = pygame.sprite.Group()
     buttons_sprite = pygame.sprite.Group()
+    card_sprites = pygame.sprite.Group()
 
     # Screen
     screen.fill((20, 20, 20))
@@ -102,6 +103,7 @@ if __name__ == '__main__':
                 if btn_start.action:
                     btn_start.action = False
                     btn_start.image = load_image('Button_start_1.png', -1)
+                    import Game
                 
                 if btn_options.action:
                     btn_options.action = False
