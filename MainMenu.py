@@ -7,10 +7,23 @@ size = width, height = w, h
 screen = pygame.display.set_mode(size)
 
 
+# Sprite groups
+all_sprites = pygame.sprite.Group()
+buttons_sprite = pygame.sprite.Group()
+
+
 # Function to close a window
 def terminate():
     pygame.quit()
     sys.exit()
+
+
+def transparency():
+    s = pygame.Surface((1000,750))
+    s.set_alpha(128)
+    s.fill((20, 20, 20))
+    screen.blit(s, (0,0))
+    pygame.display.flip()
 
 
 # Load Image
@@ -28,7 +41,7 @@ def load_image(name, colorkey=None):
         image.set_colorkey(colorkey)
     else:
         image = image.convert_alpha()
-
+    
     return image
 
 
@@ -42,6 +55,8 @@ class Button(pygame.sprite.Sprite):
             self.image = load_image('Button_options_1.png', -1)
         if num == 3:
             self.image = load_image('Button_exit_1.png', -1)
+        if num == 4:
+            self.image = load_image('Button_rules_1.png', -1)
 
         # Number of button and its activity
         self.num = num
@@ -49,6 +64,7 @@ class Button(pygame.sprite.Sprite):
 
         # Set position
         self.rect = self.image.get_rect().move(pos_x, pos_y)
+        print(self.rect)
         self.rect.x = pos_x
         self.rect.y = pos_y
 
@@ -60,40 +76,36 @@ class Button(pygame.sprite.Sprite):
             # Changing Button image
             if self.num == 1:
                 self.image = load_image('Button_start_2.png', -1)
-                print('Start game')
             
             if self.num == 2:
                 self.image = load_image('Button_options_2.png', -1)
-                print('Options')
             
             if self.num == 3:
                 self.image = load_image('Button_exit_2.png', -1)
-                print('Exit')
+
+            if self.num == 4:
+                self.image = load_image('Button_rules_2.png', -1)
 
             self.action = True
         
 
-if __name__ == '__main__':
-    # Sprite groups
-    all_sprites = pygame.sprite.Group()
-    buttons_sprite = pygame.sprite.Group()
-    card_sprites = pygame.sprite.Group()
-
+def main():
     # Screen
     screen.fill((20, 20, 20))
     fon = pygame.transform.scale(load_image('book.png'), (w, h))
     screen.blit(fon, (0, 0))
 
     # Buttons
-    btn_start = Button(0, 0, 1)
-    btn_options = Button(0, 150, 2)
-    btn_exit = Button(0, 300, 3)
+    btn_start = Button(78, 50, 1)
+    btn_options = Button(78, 200, 2)
+    btn_exit = Button(78, 350, 3)
+    btn_rules = Button(400, 50, 4)
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN: 
                 # Button click update
                 for button in buttons_sprite:
                     buttons_sprite.update(event)
@@ -101,19 +113,52 @@ if __name__ == '__main__':
             if event.type == pygame.MOUSEBUTTONUP:
                 # Buttons actions
                 if btn_start.action:
+                    for i in range(11):
+                        pygame.time.delay(50)
+                        transparency()
                     btn_start.action = False
                     btn_start.image = load_image('Button_start_1.png', -1)
                     import Game
                 
                 if btn_options.action:
+                    for i in range(11):
+                        pygame.time.delay(50)
+                        transparency()
                     btn_options.action = False
                     btn_options.image = load_image('Button_options_1.png', -1)
+
+                if btn_rules.action:
+                    for i in range(11):
+                        pygame.time.delay(50)
+                        transparency()
+                    btn_options.action = False
+                    btn_options.image = load_image('Button_rules_1.png', -1)
+                    import Rules
                 
                 if btn_exit.action:
+                    for i in range(11):
+                        pygame.time.delay(50)
+                        transparency()
                     btn_exit.action = False
                     btn_exit.image = load_image('Button_exit_1.png', -1)
                     terminate()
 
         # Display flip
-        buttons_sprite.draw(screen)
-        pygame.display.flip()
+        if pygame.mixer.music.get_busy():
+            all_sprites.draw(screen)
+            pygame.display.flip()
+        else:
+            # Music
+            file = 'data/Stalker 591 - Rebeca.mp3'
+            pygame.init()
+            pygame.mixer.init()
+            pygame.mixer.music.load(file)
+            pygame.mixer.music.set_volume(0.1)
+            pygame.mixer.music.play()
+            pygame.event.wait()
+
+            all_sprites.draw(screen)
+            pygame.display.flip()
+
+
+main()
