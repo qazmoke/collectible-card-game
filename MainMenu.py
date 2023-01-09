@@ -1,4 +1,7 @@
 import pygame, sys, os
+from Game import game
+from Rules import rules
+
 
 # Screen
 pygame.init()
@@ -118,7 +121,7 @@ def main():
                         transparency()
                     btn_start.action = False
                     btn_start.image = load_image('Button_start_1.png', -1)
-                    import Game
+                    game()
                 
                 if btn_options.action:
                     for i in range(11):
@@ -131,9 +134,14 @@ def main():
                     for i in range(11):
                         pygame.time.delay(50)
                         transparency()
-                    btn_options.action = False
-                    btn_options.image = load_image('Button_rules_1.png', -1)
-                    import Rules
+                    btn_rules.action = False
+                    btn_rules.image = load_image('Button_rules_1.png', -1)
+                    rules()
+
+                    # Screen
+                    screen.fill((20, 20, 20))
+                    fon = pygame.transform.scale(load_image('book.png'), (w, h))
+                    screen.blit(fon, (0, 0))
                 
                 if btn_exit.action:
                     for i in range(11):

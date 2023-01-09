@@ -99,5 +99,3 @@ def game():
 
         clock.tick(fps)
         pygame.display.flip()
-
-game()

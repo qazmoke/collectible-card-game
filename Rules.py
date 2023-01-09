@@ -81,8 +81,10 @@ def rules():
     font = pygame.font.Font(None, 30)
     text_coord = 50
 
+    close_window = False
+
     # Button
-    btn_exit = Button(400, 340, 1)
+    btn_exit = Button(550, 450, 1)
 
     rule_text = ["Правила", "",
                   "Это коллекционно карточная игра, где тебе надо составить",
@@ -125,11 +127,10 @@ def rules():
                         transparency()
                     btn_exit.action = False
                     btn_exit.image = load_image('Exit_rules.png', -1)
-                    import MainMenu
+                    close_window = True
 
+        if close_window:
+            break
+                    
         all_sprites.draw(screen)
         pygame.display.flip()
-
-
-
-rules()
