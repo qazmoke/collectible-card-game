@@ -5,7 +5,7 @@ from Rules import rules
 
 # Screen
 pygame.init()
-w, h = 750, 550
+w, h = 950, 750
 size = width, height = w, h
 screen = pygame.display.set_mode(size)
 
@@ -99,10 +99,10 @@ def main():
     screen.blit(fon, (0, 0))
 
     # Buttons
-    btn_start = Button(78, 50, 1)
-    btn_options = Button(78, 200, 2)
-    btn_exit = Button(78, 350, 3)
-    btn_rules = Button(400, 50, 4)
+    btn_start = Button(108, 50, 1)
+    btn_options = Button(108, 200, 2)
+    btn_exit = Button(108, 350, 3)
+    btn_rules = Button(550, 50, 4)
 
     while True:
         for event in pygame.event.get():

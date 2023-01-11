@@ -2,7 +2,7 @@ import pygame, sys, os
 
 # Screen
 pygame.init()
-w, h = 750, 550
+w, h = 950, 750
 size = width, height = w, h
 screen = pygame.display.set_mode(size)
 
@@ -46,7 +46,16 @@ class Card(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(pos_x, pos_y)
         self.rect.x = pos_x
         self.rect.y = pos_y
-        print(self.rect.width, self.rect.height)
+
+        # Characteristic
+        self.played = False
+
+    def collide(self, *args):
+        # Collide button and mouse
+        if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
+                self.rect.collidepoint(args[0].pos):
+            
+            return True
 
     def update(self, *args):
         self.rect.x = args[0]
@@ -58,30 +67,42 @@ class Card(pygame.sprite.Sprite):
 
 def game():
     # Cards
-    card = Card(100, 100)
+    cards = []
+
+    card_1 = Card(100, 500)
+    card_2 = Card(200, 500)
+    card_3 = Card(300, 500)
+
+    cards.append(card_1)
+    cards.append(card_2)
+    cards.append(card_3)
 
     clock = pygame.time.Clock()
     
     moved = False
-    played = False
-    x = 100
-    y = 100
     fps = 60
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if not played:
-                    if x + 126 >= event.pos[0] >= x and y + 179 >= event.pos[1] >= y:
-                        past_x = event.pos[0] - x
-                        past_y = event.pos[1] - y
-                        moved = True
+                for card in cards:
+                    if not card.played:
+                        if card.collide(event):
+                            past_x = event.pos[0] - card.rect.x
+                            past_y = event.pos[1] - card.rect.y
+                            moved = True
+                            break
+                else:
+                    if not moved:
+                        card = ''
             if event.type == pygame.MOUSEBUTTONUP:
                 if 300 < event.pos[0] < 428 and 100 < event.pos[1] < 281:
-                    card.update(301, 101)
-                    card.image_update()
-                    played = True
+                    if card:
+                        card.update(301, 101)
+                        card.image_update()
+                        card.played = True
+                        card = ''
                 moved = False
             if event.type == pygame.MOUSEMOTION:
                 if moved:

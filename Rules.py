@@ -2,7 +2,7 @@ import pygame, sys, os
 
 # Screen
 pygame.init()
-w, h = 750, 550
+w, h = 950, 750
 size = width, height = w, h
 screen = pygame.display.set_mode(size)
 
@@ -98,7 +98,7 @@ def rules():
             intro_rect = string_rendered.get_rect()
             text_coord += 10
             intro_rect.top = text_coord
-            intro_rect.x = 300
+            intro_rect.x = 400
             text_coord += intro_rect.height
             screen.blit(string_rendered, intro_rect)
         else:
@@ -106,7 +106,7 @@ def rules():
             intro_rect = string_rendered.get_rect()
             text_coord += 10
             intro_rect.top = text_coord
-            intro_rect.x = 80
+            intro_rect.x = 90
             text_coord += intro_rect.height
             screen.blit(string_rendered, intro_rect)
 
