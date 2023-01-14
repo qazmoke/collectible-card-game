@@ -1,6 +1,7 @@
 import pygame, sys, os
 from Game import game
 from Rules import rules
+from Options import option
 
 
 # Screen
@@ -67,7 +68,6 @@ class Button(pygame.sprite.Sprite):
 
         # Set position
         self.rect = self.image.get_rect().move(pos_x, pos_y)
-        print(self.rect)
         self.rect.x = pos_x
         self.rect.y = pos_y
 
@@ -129,6 +129,7 @@ def main():
                         transparency()
                     btn_options.action = False
                     btn_options.image = load_image('Button_options_1.png', -1)
+                    option()
 
                 if btn_rules.action:
                     for i in range(11):
