@@ -131,6 +131,11 @@ def main():
                     btn_options.image = load_image('Button_options_1.png', -1)
                     option()
 
+                    # Screen
+                    screen.fill((20, 20, 20))
+                    fon = pygame.transform.scale(load_image('book.png'), (w, h))
+                    screen.blit(fon, (0, 0))
+
                 if btn_rules.action:
                     for i in range(11):
                         pygame.time.delay(50)
