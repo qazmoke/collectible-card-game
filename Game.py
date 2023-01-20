@@ -9,6 +9,8 @@ screen = pygame.display.set_mode(size)
 # Sprite groups
 all_sprites = pygame.sprite.Group()
 card_sprites = pygame.sprite.Group()
+hp_sprites = pygame.sprite.Group()
+mana_sprites = pygame.sprite.Group()
 
 
 # Function to close a window
@@ -65,6 +67,42 @@ class Card(pygame.sprite.Sprite):
         self.image = load_image('card_played.png', -1)
 
 
+class Field:
+    def __init__(self):
+        pass
+
+
+class Health(pygame.sprite.Sprite):
+    def __init__(self, hp, pos_x, pos_y):
+        super().__init__(hp_sprites, all_sprites)
+        self.hp = hp
+        self.pos_x = pos_x
+        self.pos_y = pos_y
+
+        self.image = load_image('red_heart.png')
+        self.rect = self.image.get_rect().move(pos_x, pos_y)
+    
+    def hp_show(self):
+        font = pygame.font.Font(None, 40)
+        screen.blit(font.render(str(self.hp), 1, pygame.Color('black')), (self.pos_x + 35, self.pos_y + 25))
+
+
+class Mana(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(mana_sprites, all_sprites)
+
+        self.image = load_image('Blue_Star.png')
+        self.rect = self.image.get_rect().move(pos_x, pos_y)
+
+
+class Player:
+    def __init__(self, x_hp, y_hp, x_mana, y_mana, hp, mana):
+        self.hp = hp
+        self.hp_ob = Health(hp, x_hp, y_hp)
+        self.mana_ob = Mana(x_mana, y_mana)
+        self.mana = mana
+
+
 def game():
     # Cards
     cards = []
@@ -76,6 +114,12 @@ def game():
     cards.append(card_1)
     cards.append(card_2)
     cards.append(card_3)
+
+    # Players
+    player_1 = Player(w - 130, h - 130, 100, 100, 30, 30)
+
+    # Game variables
+    game_round = 0
 
     clock = pygame.time.Clock()
     
@@ -89,6 +133,8 @@ def game():
                 for card in cards:
                     if not card.played:
                         if card.collide(event):
+                            old_x = card.rect.x
+                            old_y = card.rect.y
                             past_x = event.pos[0] - card.rect.x
                             past_y = event.pos[1] - card.rect.y
                             moved = True
@@ -103,6 +149,9 @@ def game():
                         card.image_update()
                         card.played = True
                         card = ''
+                else:
+                    if card:
+                        card.update(old_x, old_y)
                 moved = False
             if event.type == pygame.MOUSEMOTION:
                 if moved:
@@ -113,10 +162,16 @@ def game():
         # Display flip
         screen.fill((20, 20, 20))
 
+        # Screen
+        screen.fill((20, 20, 20))
+        fon = pygame.transform.scale(load_image('hearthstone_desk.jpg'), (w, h))
+        screen.blit(fon, (0, 0))
+
         # Draw square
         pygame.draw.rect(screen, (128, 128, 128), ((299, 99), (130, 183)), 5)
 
         all_sprites.draw(screen)
+        player_1.hp_ob.hp_show()
 
         clock.tick(fps)
         pygame.display.flip()
