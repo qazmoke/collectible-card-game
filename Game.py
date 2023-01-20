@@ -68,8 +68,18 @@ class Card(pygame.sprite.Sprite):
 
 
 class Field:
-    def __init__(self):
-        pass
+    def __init__(self, point_1, point_2, color):
+        self.rect = pygame.Rect(point_1, point_2)
+        self.x = point_1[0]
+        self.y = point_1[-1]
+        self.color = color
+
+    def collide(self, *args):
+        # Collide button and mouse
+        if args and args[0].type == pygame.MOUSEBUTTONUP and \
+                self.rect.collidepoint(args[0].pos):
+            
+            return True
 
 
 class Health(pygame.sprite.Sprite):
@@ -88,35 +98,47 @@ class Health(pygame.sprite.Sprite):
 
 
 class Mana(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
+    def __init__(self, mana, pos_x, pos_y):
         super().__init__(mana_sprites, all_sprites)
+        self.mana = mana
+        self.pos_x = pos_x
+        self.pos_y = pos_y
 
         self.image = load_image('Blue_Star.png')
         self.rect = self.image.get_rect().move(pos_x, pos_y)
 
+    def mana_show(self):
+        font = pygame.font.Font(None, 40)
+        screen.blit(font.render(str(self.mana), 1, pygame.Color('black')), (self.pos_x + 44, self.pos_y + 40))
+
 
 class Player:
-    def __init__(self, x_hp, y_hp, x_mana, y_mana, hp, mana):
+    def __init__(self, pos_hp, pos_mana, hp, mana):
         self.hp = hp
-        self.hp_ob = Health(hp, x_hp, y_hp)
-        self.mana_ob = Mana(x_mana, y_mana)
         self.mana = mana
+
+        self.hp_ob = Health(hp, pos_hp[0], pos_hp[-1])
+        self.mana_ob = Mana(mana, pos_mana[0], pos_mana[-1])
 
 
 def game():
     # Cards
     cards = []
 
-    card_1 = Card(100, 500)
-    card_2 = Card(200, 500)
-    card_3 = Card(300, 500)
+    x = 100
+    for i in range(5):
+        cards.append(Card(x, 500))
+        x += 100
 
-    cards.append(card_1)
-    cards.append(card_2)
-    cards.append(card_3)
+    # Fields
+    fields = []
+    x = 100
+    for i in range(5):
+        fields.append(Field((x, 225), (130, 183), (189, 183, 107)))
+        x += 150
 
     # Players
-    player_1 = Player(w - 130, h - 130, 100, 100, 30, 30)
+    player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 30, 0)
 
     # Game variables
     game_round = 0
@@ -143,15 +165,17 @@ def game():
                     if not moved:
                         card = ''
             if event.type == pygame.MOUSEBUTTONUP:
-                if 300 < event.pos[0] < 428 and 100 < event.pos[1] < 281:
-                    if card:
-                        card.update(301, 101)
-                        card.image_update()
-                        card.played = True
-                        card = ''
-                else:
-                    if card:
-                        card.update(old_x, old_y)
+                for field in fields:
+                    if field.collide(event):
+                        if moved:
+                            if card:
+                                card.update(field.x + 2, field.y + 2)
+                                card.image_update()
+                                card.played = True
+                                card = ''
+                    else:
+                        if card:
+                            card.update(old_x, old_y)
                 moved = False
             if event.type == pygame.MOUSEMOTION:
                 if moved:
@@ -167,11 +191,14 @@ def game():
         fon = pygame.transform.scale(load_image('hearthstone_desk.jpg'), (w, h))
         screen.blit(fon, (0, 0))
 
-        # Draw square
-        pygame.draw.rect(screen, (128, 128, 128), ((299, 99), (130, 183)), 5)
+        # Draw objects
+        # pygame.draw.rect(screen, (128, 128, 128), ((299, 99), (130, 183)), 5)
 
+        for field in fields:
+            pygame.draw.rect(screen, field.color, field.rect, 5)
         all_sprites.draw(screen)
         player_1.hp_ob.hp_show()
+        player_1.mana_ob.mana_show()
 
         clock.tick(fps)
         pygame.display.flip()
