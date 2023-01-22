@@ -9,6 +9,7 @@ screen = pygame.display.set_mode(size)
 # Sprite groups
 all_sprites = pygame.sprite.Group()
 card_sprites = pygame.sprite.Group()
+buttons_sprite = pygame.sprite.Group()
 hp_sprites = pygame.sprite.Group()
 mana_sprites = pygame.sprite.Group()
 
@@ -38,8 +39,41 @@ def load_image(name, colorkey=None):
     return image
 
 
-class Card(pygame.sprite.Sprite):
+def transparency():
+    s = pygame.Surface((1000,750))
+    s.set_alpha(128)
+    s.fill((20, 20, 20))
+    screen.blit(s, (0,0))
+    pygame.display.flip()
+
+
+class Button(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
+        super().__init__(buttons_sprite)
+        
+        self.image = load_image('back_btn.png')
+
+        # Number of button and its activity
+        self.action = False
+
+        # Set position
+        self.rect = self.image.get_rect().move(pos_x, pos_y)
+        self.rect.x = pos_x
+        self.rect.y = pos_y
+    
+    def update(self, *args):
+        # Collide button and mouse
+        if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
+                self.rect.collidepoint(args[0].pos):
+            
+            # Changing Button image
+            self.image = load_image('back_btn_2.png')
+
+            self.action = True
+
+
+class Card(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, coast):
         super().__init__(card_sprites, all_sprites)
 
         self.image = load_image('card.jpg', -1)
@@ -51,6 +85,7 @@ class Card(pygame.sprite.Sprite):
 
         # Characteristic
         self.played = False
+        self.coast = coast
 
     def collide(self, *args):
         # Collide button and mouse
@@ -93,8 +128,12 @@ class Health(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(pos_x, pos_y)
     
     def hp_show(self):
-        font = pygame.font.Font(None, 40)
-        screen.blit(font.render(str(self.hp), 1, pygame.Color('black')), (self.pos_x + 35, self.pos_y + 25))
+        if self.hp > 9:
+            font = pygame.font.Font(None, 40)
+            screen.blit(font.render(str(self.hp), 1, pygame.Color('black')), (self.pos_x + 35, self.pos_y + 25))
+        else:
+            font = pygame.font.Font(None, 40)
+            screen.blit(font.render(str(self.hp), 1, pygame.Color('black')), (self.pos_x + 40, self.pos_y + 25))
 
 
 class Mana(pygame.sprite.Sprite):
@@ -108,8 +147,12 @@ class Mana(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(pos_x, pos_y)
 
     def mana_show(self):
-        font = pygame.font.Font(None, 40)
-        screen.blit(font.render(str(self.mana), 1, pygame.Color('black')), (self.pos_x + 44, self.pos_y + 40))
+        if self.mana > 9:
+            font = pygame.font.Font(None, 40)
+            screen.blit(font.render(str(self.mana), 1, pygame.Color('black')), (self.pos_x + 35, self.pos_y + 40))
+        else:
+            font = pygame.font.Font(None, 40)
+            screen.blit(font.render(str(self.mana), 1, pygame.Color('black')), (self.pos_x + 44, self.pos_y + 40))
 
 
 class Player:
@@ -127,7 +170,7 @@ def game():
 
     x = 100
     for i in range(5):
-        cards.append(Card(x, 500))
+        cards.append(Card(x, 500, 2))
         x += 100
 
     # Fields
@@ -138,10 +181,16 @@ def game():
         x += 150
 
     # Players
-    player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 30, 0)
+    player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 5, 10)
+    player_2 = ''
+
+    # Button
+    btn_back = Button(700, 600)
 
     # Game variables
     game_round = 0
+    player_step = player_1
+    close_window = False
 
     clock = pygame.time.Clock()
     
@@ -152,6 +201,9 @@ def game():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.MOUSEBUTTONDOWN:
+                for button in buttons_sprite:
+                    buttons_sprite.update(event)
+                
                 for card in cards:
                     if not card.played:
                         if card.collide(event):
@@ -165,6 +217,15 @@ def game():
                     if not moved:
                         card = ''
             if event.type == pygame.MOUSEBUTTONUP:
+                if btn_back.action:
+                    for i in range(11):
+                        pygame.time.delay(50)
+                        transparency()
+                    btn_back.action = False
+                    btn_back.image = load_image('back_btn.png', -1)
+                    close_window = True
+
+                
                 for field in fields:
                     if field.collide(event):
                         if moved:
@@ -172,6 +233,7 @@ def game():
                                 card.update(field.x + 2, field.y + 2)
                                 card.image_update()
                                 card.played = True
+                                player_step.mana_ob.mana -= card.coast
                                 card = ''
                     else:
                         if card:
@@ -186,19 +248,43 @@ def game():
         # Display flip
         screen.fill((20, 20, 20))
 
-        # Screen
-        screen.fill((20, 20, 20))
-        fon = pygame.transform.scale(load_image('hearthstone_desk.jpg'), (w, h))
-        screen.blit(fon, (0, 0))
+        if close_window:
+            break
 
-        # Draw objects
-        # pygame.draw.rect(screen, (128, 128, 128), ((299, 99), (130, 183)), 5)
+        # if player_step.mana_ob.mana == 0:
+        #     if player_step == player_1:
+        #         player_step = player_2
+        #     else:
+        #         player_step = player_1
+            
+            game_round += 1
 
-        for field in fields:
-            pygame.draw.rect(screen, field.color, field.rect, 5)
-        all_sprites.draw(screen)
-        player_1.hp_ob.hp_show()
-        player_1.mana_ob.mana_show()
+        # Win or lose
+        if player_step.hp_ob.hp == 0:
+            cards = []
+
+            if player_step == player_1:
+                screen.fill((20, 20, 20))
+                fon = pygame.transform.scale(load_image('gameover_screen.png'), (w, h))
+                screen.blit(fon, (0, 0))
+            else:
+                screen.fill((20, 20, 20))
+                fon = pygame.transform.scale(load_image('win_screen.png'), (w, h))
+                screen.blit(fon, (0, 0))
+
+            buttons_sprite.draw(screen)
+        else:
+            # Screen
+            screen.fill((20, 20, 20))
+            fon = pygame.transform.scale(load_image('hearthstone_desk.jpg'), (w, h))
+            screen.blit(fon, (0, 0))
+
+            # Draw objects
+            for field in fields:
+                pygame.draw.rect(screen, field.color, field.rect, 5)
+            all_sprites.draw(screen)
+            player_1.hp_ob.hp_show()
+            player_1.mana_ob.mana_show()
 
         clock.tick(fps)
         pygame.display.flip()

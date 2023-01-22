@@ -122,6 +122,11 @@ def main():
                     btn_start.action = False
                     btn_start.image = load_image('Button_start_1.png', -1)
                     game()
+
+                    # Screen
+                    screen.fill((20, 20, 20))
+                    fon = pygame.transform.scale(load_image('book.png'), (w, h))
+                    screen.blit(fon, (0, 0))
                 
                 if btn_options.action:
                     for i in range(11):
