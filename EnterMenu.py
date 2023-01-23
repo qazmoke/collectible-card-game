@@ -73,13 +73,13 @@ def main():
                     btn_enter.activate = False
                     btn_enter.color = 'DodgerBlue'
 
-                    con = sqlite3.connect("data/registration.db")
-                    res = [i[0] for i in con.cursor().execute("""SELECT name FROM users""").fetchall()]
+                    con = sqlite3.connect("data/Database/users.db")
+                    res = [i[0] for i in con.cursor().execute("""SELECT username FROM users""").fetchall()]
 
                     if box_login.text and box_password.text:
                         if box_login.text in res:
                             res = con.cursor().execute("""SELECT password FROM users
-                            WHERE name=?""", (box_login.text,)).fetchone()[0]
+                            WHERE username=?""", (box_login.text,)).fetchone()[0]
 
                             if box_password.text == res:
                                 close_window = True

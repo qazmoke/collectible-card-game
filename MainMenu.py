@@ -22,6 +22,7 @@ def terminate():
     sys.exit()
 
 
+# Function (animation of closing the window)
 def transparency():
     s = pygame.Surface((1000,750))
     s.set_alpha(128)

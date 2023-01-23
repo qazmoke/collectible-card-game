@@ -88,8 +88,8 @@ def registr():
                                             if not box_password_1.text.isalpha():
                                                 if not box_password_1.text.isupper():
                                                     if not box_password_1.text.islower():
-                                                        con = sqlite3.connect("data/registration.db")
-                                                        con.cursor().execute("""INSERT INTO users(name, password) 
+                                                        con = sqlite3.connect("data/Database/users.db")
+                                                        con.cursor().execute("""INSERT INTO users(username, password) 
                                                         VALUES(?, ?)""", (box_login.text, box_password_1.text))
 
                                                         con.commit()

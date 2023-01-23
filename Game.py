@@ -39,6 +39,7 @@ def load_image(name, colorkey=None):
     return image
 
 
+# Function (animation of closing the window)
 def transparency():
     s = pygame.Surface((1000,750))
     s.set_alpha(128)
@@ -73,10 +74,14 @@ class Button(pygame.sprite.Sprite):
 
 
 class Card(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, coast):
+    def __init__(self, pos_x, pos_y, coast, player, id_player):
         super().__init__(card_sprites, all_sprites)
 
-        self.image = load_image('card.jpg', -1)
+        if id_player == 1:
+            self.image = load_image('card.jpg', -1)
+        else:
+            self.image = load_image('card.jpg', -1)
+            self.image = pygame.transform.rotate(self.image, 180)
 
         # Set position
         self.rect = self.image.get_rect().move(pos_x, pos_y)
@@ -84,6 +89,7 @@ class Card(pygame.sprite.Sprite):
         self.rect.y = pos_y
 
         # Characteristic
+        self.player = player
         self.played = False
         self.coast = coast
 
@@ -105,6 +111,7 @@ class Card(pygame.sprite.Sprite):
 class Field:
     def __init__(self, point_1, point_2, color):
         self.rect = pygame.Rect(point_1, point_2)
+        # Characteristic
         self.x = point_1[0]
         self.y = point_1[-1]
         self.color = color
@@ -115,6 +122,40 @@ class Field:
                 self.rect.collidepoint(args[0].pos):
             
             return True
+
+
+class AnimatedSprite(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        # Copy images for animation
+        super().__init__(all_sprites)
+        os.chdir('data')
+        os.chdir('images')
+        s = os.listdir()
+        os.chdir('..')
+        os.chdir('..')
+
+        # Objects
+        self.frames = []
+        for i in s:
+            self.frames.append(load_image('images/' + i))
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.image.get_rect().move(x, y)
+        self.rect.x = x
+        self.rect.y = y
+        self.action = False
+
+    def update(self):
+        if (self.cur_frame + 2) <= len(self.frames):
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames[self.cur_frame]
+        else:
+            self.cur_frame = 0
+            self.action = False
+
+    def position(self, x, y):
+        self.rect.x = x
+        self.rect.y = y
 
 
 class Health(pygame.sprite.Sprite):
@@ -168,24 +209,42 @@ def game():
     # Cards
     cards = []
 
+    # Players
+    player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 5, 10)
+    player_2 = Player((w - 130, 20), (w - 250, 15), 5, 10)
+
     x = 100
-    for i in range(5):
-        cards.append(Card(x, 500, 2))
-        x += 100
+    y = 550
+    player_step = player_1
+    id = 1
+    for j in range(2):
+        for i in range(5):
+            cards.append(Card(x, y, 2, player_step, id))
+            if y != 10:
+                x += 100
+            else:
+                x += 60
+        y = -80
+        x = 100
+        id = 2
+        player_step = player_2
 
     # Fields
     fields = []
     x = 100
-    for i in range(5):
-        fields.append(Field((x, 225), (130, 183), (189, 183, 107)))
-        x += 150
-
-    # Players
-    player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 5, 10)
-    player_2 = ''
+    y = 125
+    for j in range(2):
+        for i in range(5):
+            fields.append(Field((x, y), (130, 183), (189, 183, 107)))
+            x += 150
+        y = 325
+        x = 100
 
     # Button
     btn_back = Button(700, 600)
+
+    # Animation
+    clouds = AnimatedSprite(w, h)
 
     # Game variables
     game_round = 0
@@ -205,14 +264,17 @@ def game():
                     buttons_sprite.update(event)
                 
                 for card in cards:
+                    # Player choose card (checking)
                     if not card.played:
-                        if card.collide(event):
-                            old_x = card.rect.x
-                            old_y = card.rect.y
-                            past_x = event.pos[0] - card.rect.x
-                            past_y = event.pos[1] - card.rect.y
-                            moved = True
-                            break
+                        # Right player need
+                        if card.player == player_step:
+                            if card.collide(event):
+                                old_x = card.rect.x
+                                old_y = card.rect.y
+                                past_x = event.pos[0] - card.rect.x
+                                past_y = event.pos[1] - card.rect.y
+                                moved = True
+                                break
                 else:
                     if not moved:
                         card = ''
@@ -225,7 +287,7 @@ def game():
                     btn_back.image = load_image('back_btn.png', -1)
                     close_window = True
 
-                
+                # Player move (checking)
                 for field in fields:
                     if field.collide(event):
                         if moved:
@@ -233,6 +295,8 @@ def game():
                                 card.update(field.x + 2, field.y + 2)
                                 card.image_update()
                                 card.played = True
+                                clouds.position(player_step.mana_ob.pos_x, player_step.mana_ob.pos_y + 2)
+                                clouds.action = True
                                 player_step.mana_ob.mana -= card.coast
                                 card = ''
                     else:
@@ -251,11 +315,11 @@ def game():
         if close_window:
             break
 
-        # if player_step.mana_ob.mana == 0:
-        #     if player_step == player_1:
-        #         player_step = player_2
-        #     else:
-        #         player_step = player_1
+        if player_step.mana_ob.mana == 0:
+            if player_step == player_1:
+                player_step = player_2
+            else:
+                player_step = player_1
             
             game_round += 1
 
@@ -283,8 +347,15 @@ def game():
             for field in fields:
                 pygame.draw.rect(screen, field.color, field.rect, 5)
             all_sprites.draw(screen)
+
+            # Player
             player_1.hp_ob.hp_show()
             player_1.mana_ob.mana_show()
+            player_2.hp_ob.hp_show()
+            player_2.mana_ob.mana_show()
+
+            if clouds.action:
+                clouds.update()
 
         clock.tick(fps)
         pygame.display.flip()
