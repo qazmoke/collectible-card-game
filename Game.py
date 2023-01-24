@@ -36,7 +36,7 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
 
-    return image
+    return image  
 
 
 # Function (animation of closing the window)
@@ -49,12 +49,16 @@ def transparency():
 
 
 class Button(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(buttons_sprite)
+    def __init__(self, pos_x, pos_y, num, group):
+        super().__init__(group)
         
-        self.image = load_image('back_btn.png')
+        if num == 1:
+            self.image = load_image('back_btn.png')
+        if num == 2:
+            self.image = load_image('button_step.png')
 
         # Number of button and its activity
+        self.num = num
         self.action = False
 
         # Set position
@@ -68,13 +72,16 @@ class Button(pygame.sprite.Sprite):
                 self.rect.collidepoint(args[0].pos):
             
             # Changing Button image
-            self.image = load_image('back_btn_2.png')
+            if self.num == 1:
+                self.image = load_image('back_btn_2.png')
+            if self.num == 2:
+                self.image = load_image('button_step_2.png')
 
             self.action = True
 
 
 class Card(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, coast, player, id_player):
+    def __init__(self, pos_x, pos_y, coast, player, id_player, id):
         super().__init__(card_sprites, all_sprites)
 
         if id_player == 1:
@@ -92,6 +99,7 @@ class Card(pygame.sprite.Sprite):
         self.player = player
         self.played = False
         self.coast = coast
+        self.id = id
 
     def collide(self, *args):
         # Collide button and mouse
@@ -109,12 +117,14 @@ class Card(pygame.sprite.Sprite):
 
 
 class Field:
-    def __init__(self, point_1, point_2, color):
+    def __init__(self, point_1, point_2, color, player):
         self.rect = pygame.Rect(point_1, point_2)
         # Characteristic
         self.x = point_1[0]
         self.y = point_1[-1]
         self.color = color
+        self.activate = False
+        self.player = player
 
     def collide(self, *args):
         # Collide button and mouse
@@ -200,18 +210,19 @@ class Player:
     def __init__(self, pos_hp, pos_mana, hp, mana):
         self.hp = hp
         self.mana = mana
+        self.deck = ['card', 'card', 'card', 'card', 'card']
 
         self.hp_ob = Health(hp, pos_hp[0], pos_hp[-1])
         self.mana_ob = Mana(mana, pos_mana[0], pos_mana[-1])
 
 
 def game():
-    # Cards
-    cards = []
-
     # Players
     player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 5, 10)
     player_2 = Player((w - 130, 20), (w - 250, 15), 5, 10)
+
+    # Cards
+    cards = []
 
     x = 100
     y = 550
@@ -219,11 +230,8 @@ def game():
     id = 1
     for j in range(2):
         for i in range(5):
-            cards.append(Card(x, y, 2, player_step, id))
-            if y != 10:
-                x += 100
-            else:
-                x += 60
+            cards.append(Card(x, y, 2, player_step, id, i))
+            x += 100
         y = -80
         x = 100
         id = 2
@@ -231,25 +239,38 @@ def game():
 
     # Fields
     fields = []
-    x = 100
+    x = 70
     y = 125
+    player_step = player_2
     for j in range(2):
         for i in range(5):
-            fields.append(Field((x, y), (130, 183), (189, 183, 107)))
+            fields.append(Field((x, y), (130, 183), (189, 183, 107), player_step))
             x += 150
         y = 325
-        x = 100
+        x = 70
+        player_step = player_1
 
     # Button
-    btn_back = Button(700, 600)
+    btn_back = Button(700, 600, 1, buttons_sprite)
+    btn_step = Button(w - 130, 275, 2, all_sprites)
+
+    # Timer
+    time_count = 45
+    font = pygame.font.SysFont(None, 200)
+    text_time = font.render(str(time_count), True, (255, 0, 0))
+
+    timer_event = pygame.USEREVENT+1
+    pygame.time.set_timer(timer_event, 1000)
 
     # Animation
     clouds = AnimatedSprite(w, h)
 
     # Game variables
     game_round = 0
-    player_step = player_1
+    game_end = False
     close_window = False
+    player_step = player_1
+    mana = 10
 
     clock = pygame.time.Clock()
     
@@ -259,27 +280,49 @@ def game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+            elif event.type == timer_event:
+                time_count -= 1
+                if time_count <= 10:
+                    text_time = font.render(str(time_count), True, (255, 0, 0))
+                if time_count == 0:
+                    # Change Player
+                    if player_step == player_1:
+                        player_step = player_2
+                    else:
+                        player_step = player_1
+                    
+                    mana += 1
+                    player_step.mana_ob.mana = mana
+                    game_round += 1
+                    time_count = 45
+                
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for button in buttons_sprite:
                     buttons_sprite.update(event)
                 
+                for el in all_sprites:
+                    if el.__class__ == Button and player_step == player_1:
+                        el.update(event)
+                
                 for card in cards:
                     # Player choose card (checking)
                     if not card.played:
-                        # Right player need
-                        if card.player == player_step:
-                            if card.collide(event):
-                                old_x = card.rect.x
-                                old_y = card.rect.y
-                                past_x = event.pos[0] - card.rect.x
-                                past_y = event.pos[1] - card.rect.y
-                                moved = True
-                                break
+                        # Not player_2
+                        if player_step == player_1:
+                            # Right player need
+                            if card.player == player_step:
+                                if card.collide(event):
+                                    old_x = card.rect.x
+                                    old_y = card.rect.y
+                                    past_x = event.pos[0] - card.rect.x
+                                    past_y = event.pos[1] - card.rect.y
+                                    moved = True
+                                    break
                 else:
                     if not moved:
                         card = ''
             if event.type == pygame.MOUSEBUTTONUP:
-                if btn_back.action:
+                if btn_back.action and game_end:
                     for i in range(11):
                         pygame.time.delay(50)
                         transparency()
@@ -287,14 +330,31 @@ def game():
                     btn_back.image = load_image('back_btn.png', -1)
                     close_window = True
 
+                if btn_step.action and player_step == player_1:
+                    btn_step.action = False
+                    btn_step.image = load_image('button_step.png')
+
+                    # Change Player
+                    if player_step == player_1:
+                        player_step = player_2
+                    else:
+                        player_step = player_1
+                    
+                    mana += 1
+                    player_step.mana_ob.mana = mana
+                    game_round += 1
+                    time_count = 45
+
                 # Player move (checking)
                 for field in fields:
                     if field.collide(event):
-                        if moved:
-                            if card:
+                        if moved and field.player == player_step:
+                            if card and not field.activate:
+                                player_step.deck[card.id] = ''
                                 card.update(field.x + 2, field.y + 2)
                                 card.image_update()
                                 card.played = True
+                                field.activate = True
                                 clouds.position(player_step.mana_ob.pos_x, player_step.mana_ob.pos_y + 2)
                                 clouds.action = True
                                 player_step.mana_ob.mana -= card.coast
@@ -314,14 +374,33 @@ def game():
 
         if close_window:
             break
+        
+        # Give cards
+        if time_count == 45 and game_round != 0:
+            x = 100
+            for el in range(len(player_step.deck)):
+                if player_step.deck[el] == '':
+                    if player_step == player_1:
+                        y = 550
+                        id = 1
+                    else:
+                        y = -80
+                        id = 2
+                    cards.append(Card(x + (100 * el), y, 2, player_step, id, el))
+                    player_step.deck[el] = 'card'
+                    break
 
         if player_step.mana_ob.mana == 0:
+            # Change Player
             if player_step == player_1:
                 player_step = player_2
             else:
                 player_step = player_1
             
+            mana += 1
+            player_step.mana_ob.mana = mana
             game_round += 1
+            time_count = 45
 
         # Win or lose
         if player_step.hp_ob.hp == 0:
@@ -336,6 +415,7 @@ def game():
                 fon = pygame.transform.scale(load_image('win_screen.png'), (w, h))
                 screen.blit(fon, (0, 0))
 
+            game_end = True
             buttons_sprite.draw(screen)
         else:
             # Screen
@@ -356,6 +436,10 @@ def game():
 
             if clouds.action:
                 clouds.update()
+
+            if time_count <= 10:
+                text_rect = text_time.get_rect(center = screen.get_rect().center)
+                screen.blit(text_time, text_rect)
 
         clock.tick(fps)
         pygame.display.flip()
