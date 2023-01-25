@@ -2,6 +2,7 @@ import pygame
 import sys, os
 import sqlite3
 from Registration import registr
+import MainMenu
 
 pygame.init()
 size = w, h = 400, 400
@@ -36,6 +37,8 @@ class Button():
 
 
 def main():
+    global user
+
     font = pygame.font.Font(None, 30)
     font_logo = pygame.font.Font(None, 50)
 
@@ -80,8 +83,10 @@ def main():
                         if box_login.text in res:
                             res = con.cursor().execute("""SELECT password FROM users
                             WHERE username=?""", (box_login.text,)).fetchone()[0]
+                            con.close()
 
                             if box_password.text == res:
+                                user = box_login.text
                                 close_window = True
                 
                 if btn_registr.activate:
@@ -163,5 +168,6 @@ def main():
         
         clock.tick(fps)
         pygame.display.flip()
+
 
 main()

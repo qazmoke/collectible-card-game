@@ -27,6 +27,7 @@ class Button():
 
 
 def registr():
+    # Text
     font = pygame.font.Font(None, 30)
     font_rule = pygame.font.Font(None, 22)
     font_logo = pygame.font.Font(None, 50)
@@ -35,6 +36,7 @@ def registr():
     box_password_1 = Text_Box(120, 160, 200, 40)
     box_password_2 = Text_Box(120, 220, 200, 40)
 
+    # Buttons
     btn_back = Button(20, 330, 150, 40)
     btn_confirm = Button(230, 330, 150, 40)
 
@@ -93,6 +95,7 @@ def registr():
                                                         VALUES(?, ?)""", (box_login.text, box_password_1.text))
 
                                                         con.commit()
+                                                        con.close()
 
                                                         close_window = True
                                                     else:

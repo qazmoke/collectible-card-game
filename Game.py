@@ -1,4 +1,6 @@
 import pygame, sys, os
+import sqlite3
+from EnterMenu import user
 
 # Screen
 pygame.init()
@@ -207,10 +209,11 @@ class Mana(pygame.sprite.Sprite):
 
 
 class Player:
-    def __init__(self, pos_hp, pos_mana, hp, mana):
+    def __init__(self, pos_hp, pos_mana, hp, mana, user=None):
         self.hp = hp
         self.mana = mana
         self.deck = ['card', 'card', 'card', 'card', 'card']
+        self.user = user
 
         self.hp_ob = Health(hp, pos_hp[0], pos_hp[-1])
         self.mana_ob = Mana(mana, pos_mana[0], pos_mana[-1])
@@ -218,8 +221,8 @@ class Player:
 
 def game():
     # Players
-    player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 5, 10)
-    player_2 = Player((w - 130, 20), (w - 250, 15), 5, 10)
+    player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 5, 10, user)
+    player_2 = Player((w - 130, 20), (w - 250, 15), 0, 10)
 
     # Cards
     cards = []
@@ -350,15 +353,16 @@ def game():
                     if field.collide(event):
                         if moved and field.player == player_step:
                             if card and not field.activate:
-                                player_step.deck[card.id] = ''
-                                card.update(field.x + 2, field.y + 2)
-                                card.image_update()
-                                card.played = True
-                                field.activate = True
-                                clouds.position(player_step.mana_ob.pos_x, player_step.mana_ob.pos_y + 2)
-                                clouds.action = True
-                                player_step.mana_ob.mana -= card.coast
-                                card = ''
+                                if player_step.mana_ob.mana >= card.coast:
+                                    player_step.deck[card.id] = ''
+                                    card.update(field.x + 2, field.y + 2)
+                                    card.image_update()
+                                    card.played = True
+                                    field.activate = True
+                                    clouds.position(player_step.mana_ob.pos_x, player_step.mana_ob.pos_y + 2)
+                                    clouds.action = True
+                                    player_step.mana_ob.mana -= card.coast
+                                    card = ''
                     else:
                         if card:
                             card.update(old_x, old_y)
@@ -403,10 +407,11 @@ def game():
             time_count = 45
 
         # Win or lose
-        if player_step.hp_ob.hp == 0:
+        if player_1.hp_ob.hp == 0 or player_2.hp_ob.hp == 0:
             cards = []
-
-            if player_step == player_1:
+            # Draw Screen
+            font_end = pygame.font.Font(None, 40)
+            if player_1.hp_ob.hp == 0:
                 screen.fill((20, 20, 20))
                 fon = pygame.transform.scale(load_image('gameover_screen.png'), (w, h))
                 screen.blit(fon, (0, 0))
@@ -414,8 +419,56 @@ def game():
                 screen.fill((20, 20, 20))
                 fon = pygame.transform.scale(load_image('win_screen.png'), (w, h))
                 screen.blit(fon, (0, 0))
+            
+            if not game_end:
+                # Connect
+                con = sqlite3.connect("data/Database/users.db")
+                loses = con.cursor().execute("""SELECT lose FROM users
+                WHERE username = ?""", (user,)).fetchone()[0]
+                wins = con.cursor().execute("""SELECT win FROM users
+                WHERE username = ?""", (user,)).fetchone()[0]
+                level = con.cursor().execute("""SELECT level FROM users
+                WHERE username = ?""", (user,)).fetchone()[0]
 
-            game_end = True
+                if player_1.hp_ob.hp == 0:
+                    if loses:
+                        loses += 1
+                    else:
+                        loses = 1
+                    con.cursor().execute("""UPDATE users
+                    SET lose = ?
+                    WHERE username = ?""", (loses, user))
+                
+                if player_2.hp_ob.hp == 0:
+                    if wins:
+                        wins += 1
+                    else:
+                        wins = 1
+
+                    if level:
+                        level += 0.5
+                    else:
+                        level = 0.5
+
+                    con.cursor().execute("""UPDATE users
+                    SET win = ?, level = ?
+                    WHERE username = ?""", (wins, level, user))
+                
+                con.commit()
+                con.close()
+                game_end = True
+            
+            # Draw objects
+            lable = ['user: ' + str(user), 'level: ' + str(level), 'wins: ' + str(wins), 'loses: ' + str(loses)]
+            top = 20
+            for i in range(4):
+                font_text = font_end.render(lable[i], 1, pygame.Color('Snow'))
+                font_rect = font_text.get_rect()
+                font_rect.top = top
+                top += 30
+                font_rect.x = 700
+                screen.blit(font_text, font_rect)
+
             buttons_sprite.draw(screen)
         else:
             # Screen
