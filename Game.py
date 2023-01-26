@@ -297,6 +297,7 @@ def game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+            # New round
             elif event.type == timer_event:
                 time_count -= 1
                 if time_count <= 10:
