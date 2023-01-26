@@ -1,6 +1,7 @@
-import pygame, sys, os
-import sqlite3
+import pygame, sqlite3, sys, os
+from random import randint
 from EnterMenu import user
+import Cards_E
 
 # Screen
 pygame.init()
@@ -14,6 +15,10 @@ card_sprites = pygame.sprite.Group()
 buttons_sprite = pygame.sprite.Group()
 hp_sprites = pygame.sprite.Group()
 mana_sprites = pygame.sprite.Group()
+
+# Cards
+deck = [Cards_E.Shiny(atk=2, hp=5, type=9), Cards_E.Mutant(type=10), Cards_E.Nothing(type=13), Cards_E.Oboroten(type=6), Cards_E.True_Vamp(type=12),
+Cards_E.Shadow(type=1), Cards_E.Stradauschii(type=2), Cards_E.Silf(type=7), Cards_E.Oilus(type=8), Cards_E.Rodia(type=11)]
 
 
 # Function to close a window
@@ -83,11 +88,11 @@ class Button(pygame.sprite.Sprite):
 
 
 class Card(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, coast, player, id_player, id):
+    def __init__(self, pos_x, pos_y, coast, player, id_player, id, card):
         super().__init__(card_sprites, all_sprites)
 
         if id_player == 1:
-            self.image = load_image('card.jpg', -1)
+            self.image = card.image
         else:
             self.image = load_image('card.jpg', -1)
             self.image = pygame.transform.rotate(self.image, 180)
@@ -99,6 +104,7 @@ class Card(pygame.sprite.Sprite):
 
         # Characteristic
         self.player = player
+        self.typeCard = card
         self.played = False
         self.coast = coast
         self.id = id
@@ -115,7 +121,8 @@ class Card(pygame.sprite.Sprite):
         self.rect.y = args[1]
 
     def image_update(self):
-        self.image = load_image('card_played.png', -1)
+        pass
+        # self.image = load_image('card_played.png', -1)
 
 
 class Field:
@@ -212,7 +219,8 @@ class Player:
     def __init__(self, pos_hp, pos_mana, hp, mana, user=None):
         self.hp = hp
         self.mana = mana
-        self.deck = ['card', 'card', 'card', 'card', 'card']
+        self.deck_type = []
+        self.deck = []
         self.user = user
 
         self.hp_ob = Health(hp, pos_hp[0], pos_hp[-1])
@@ -222,7 +230,7 @@ class Player:
 def game():
     # Players
     player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 5, 10, user)
-    player_2 = Player((w - 130, 20), (w - 250, 15), 0, 10)
+    player_2 = Player((w - 130, 20), (w - 250, 15), 5, 10)
 
     # Cards
     cards = []
@@ -233,7 +241,13 @@ def game():
     id = 1
     for j in range(2):
         for i in range(5):
-            cards.append(Card(x, y, 2, player_step, id, i))
+            # No repeating cards
+            card = Card(x, y, 2, player_step, id, i, deck[randint(0, 9)])
+            while card.typeCard.type in player_step.deck_type:
+                card = Card(x, y, 2, player_step, id, i, deck[randint(0, 9)])
+            cards.append(card)
+            player_step.deck_type.append(card.typeCard.type)
+            player_step.deck.append(card.typeCard)
             x += 100
         y = -80
         x = 100
@@ -325,6 +339,7 @@ def game():
                     if not moved:
                         card = ''
             if event.type == pygame.MOUSEBUTTONUP:
+                # Exit
                 if btn_back.action and game_end:
                     for i in range(11):
                         pygame.time.delay(50)
@@ -333,6 +348,7 @@ def game():
                     btn_back.image = load_image('back_btn.png', -1)
                     close_window = True
 
+                 # New round
                 if btn_step.action and player_step == player_1:
                     btn_step.action = False
                     btn_step.image = load_image('button_step.png')
@@ -355,6 +371,7 @@ def game():
                             if card and not field.activate:
                                 if player_step.mana_ob.mana >= card.coast:
                                     player_step.deck[card.id] = ''
+                                    player_step.deck_type[card.id] = ''
                                     card.update(field.x + 2, field.y + 2)
                                     card.image_update()
                                     card.played = True
@@ -379,8 +396,13 @@ def game():
         if close_window:
             break
         
-        # Give cards
         if time_count == 45 and game_round != 0:
+            for i in player_step.deck:
+                print(i.atk)
+            time_count -= 1
+        
+        # Give cards
+        if time_count == 44 and game_round != 0:
             x = 100
             for el in range(len(player_step.deck)):
                 if player_step.deck[el] == '':
@@ -390,10 +412,20 @@ def game():
                     else:
                         y = -80
                         id = 2
-                    cards.append(Card(x + (100 * el), y, 2, player_step, id, el))
-                    player_step.deck[el] = 'card'
-                    break
 
+                    # No repeating cards
+                    card = Card(x + (100 * el), y, 2, player_step, id, el, deck[randint(0, 9)])
+                    while card in cards:
+                        card = Card(x + (100 * el), y, 2, player_step, id, el, deck[randint(0, 9)])
+
+                    cards.append(card)
+                    player_step.deck_type[el] = card.typeCard.type
+                    player_step.deck[el] = card.typeCard
+
+                    time_count -= 1
+                    break
+        
+        # New round
         if player_step.mana_ob.mana == 0:
             # Change Player
             if player_step == player_1:
