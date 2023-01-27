@@ -9,6 +9,9 @@ w, h = 950, 750
 size = width, height = w, h
 screen = pygame.display.set_mode(size)
 
+player_hp = 0
+board = ''
+
 # Sprite groups
 all_sprites = pygame.sprite.Group()
 card_sprites = pygame.sprite.Group()
@@ -17,8 +20,8 @@ hp_sprites = pygame.sprite.Group()
 mana_sprites = pygame.sprite.Group()
 
 # Cards
-deck = [Cards_E.Shiny(atk=2, hp=5, type=9), Cards_E.Mutant(type=10), Cards_E.Nothing(type=13), Cards_E.Oboroten(type=6), Cards_E.True_Vamp(type=12),
-Cards_E.Shadow(type=1), Cards_E.Stradauschii(type=2), Cards_E.Silf(type=7), Cards_E.Oilus(type=8), Cards_E.Rodia(type=11)]
+deck = [Cards_E.Shiny(atk=2, hp=5, type=9), Cards_E.Mutant(atk=3, type=10), Cards_E.Nothing(atk=3, type=13), Cards_E.Oboroten(atk=4, type=6), Cards_E.True_Vamp(atk=4, type=12),
+Cards_E.Shadow(atk=1, type=1), Cards_E.Stradauschii(atk=6, type=2), Cards_E.Silf(atk=7, type=7), Cards_E.Oilus(atk=2, type=8), Cards_E.Rodia(atk=8, type=11)]
 
 
 # Function to close a window
@@ -63,6 +66,10 @@ class Button(pygame.sprite.Sprite):
             self.image = load_image('back_btn.png')
         if num == 2:
             self.image = load_image('button_step.png')
+        if num == 3:
+            self.image = load_image('Button_clasik.png', -1)
+        if num == 4:
+            self.image = load_image('Button_fast.png', -1)
 
         # Number of button and its activity
         self.num = num
@@ -83,12 +90,16 @@ class Button(pygame.sprite.Sprite):
                 self.image = load_image('back_btn_2.png')
             if self.num == 2:
                 self.image = load_image('button_step_2.png')
+            if self.num == 3:
+                self.image = load_image('Button_clasik_2.png', -1)
+            if self.num == 4:
+                self.image = load_image('Button_fast_2.png', -1)
 
             self.action = True
 
 
 class Card(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, coast, player, id_player, id, card):
+    def __init__(self, pos_x, pos_y, player, id_player, id, card):
         super().__init__(card_sprites, all_sprites)
 
         if id_player == 1:
@@ -106,7 +117,7 @@ class Card(pygame.sprite.Sprite):
         self.player = player
         self.typeCard = card
         self.played = False
-        self.coast = coast
+        self.coast = card.act1_mana
         self.id = id
 
     def collide(self, *args):
@@ -123,6 +134,21 @@ class Card(pygame.sprite.Sprite):
     def image_update(self):
         pass
         # self.image = load_image('card_played.png', -1)
+
+    def die(self):
+        self.kill()
+
+    def hp_show(self):
+        font = pygame.font.Font(None, 40)
+        screen.blit(font.render(str(self.typeCard.hp), 1, pygame.Color('GreenYellow')), (self.rect.x + 10, self.rect.y + 140))
+
+    def atk_show(self):
+        font = pygame.font.Font(None, 40)
+        screen.blit(font.render(str(self.typeCard.atk), 1, pygame.Color('red')), (self.rect.x + 45, self.rect.y + 140))
+
+    def mana_show(self):
+        font = pygame.font.Font(None, 40)
+        screen.blit(font.render(str(self.coast), 1, pygame.Color('DeepSkyBlue')), (self.rect.x + 80, self.rect.y + 140))
 
 
 class Field:
@@ -220,6 +246,7 @@ class Player:
         self.hp = hp
         self.mana = mana
         self.deck_type = []
+        self.deck_played = ['', '', '', '', '']
         self.deck = []
         self.user = user
 
@@ -227,10 +254,62 @@ class Player:
         self.mana_ob = Mana(mana, pos_mana[0], pos_mana[-1])
 
 
+# Выбор режима
+def start_screen():
+    global player_hp, board
+
+    screen.fill((30, 30, 30))
+    fon = pygame.transform.scale(load_image('book.png'), (w, h))
+    screen.blit(fon, (0, 0))
+
+    all_sprites = pygame.sprite.Group()
+
+    # Buttons
+    btn_1 = Button(108, 50, 3, all_sprites)
+    btn_2 = Button(108, 200, 4, all_sprites)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for button in all_sprites:
+                    all_sprites.update(event)
+            if event.type == pygame.MOUSEBUTTONUP:
+                if btn_1.action:
+                    for i in range(11):
+                        pygame.time.delay(50)
+                        transparency()
+                    btn_1.action = False
+                    btn_1.image = load_image('Button_clasik.png', -1)
+                    all_sprites = pygame.sprite.Group()
+                    board = load_image('hearthstone_desk.jpg')
+                    player_hp = 45
+                    game()
+                
+                if btn_2.action:
+                    for i in range(11):
+                        pygame.time.delay(50)
+                        transparency()
+                    btn_2.action = False
+                    btn_2.image = load_image('Button_fast.png', -1)
+                    all_sprites = pygame.sprite.Group()
+                    board = load_image('Desk.png')
+                    player_hp = 25
+                    game()
+
+    
+        all_sprites.draw(screen)
+        pygame.display.flip()
+
+
+# Основная игра
 def game():
+    global player_hp, board
+
     # Players
-    player_1 = Player((w - 130, h - 120), (w - 250, h - 130), 5, 10, user)
-    player_2 = Player((w - 130, 20), (w - 250, 15), 5, 10)
+    player_1 = Player((w - 130, h - 120), (w - 250, h - 130), player_hp, 10, user)
+    player_2 = Player((w - 130, 20), (w - 250, 15), player_hp, 10)
 
     # Cards
     cards = []
@@ -238,20 +317,19 @@ def game():
     x = 100
     y = 550
     player_step = player_1
-    id = 1
     for j in range(2):
         for i in range(5):
             # No repeating cards
-            card = Card(x, y, 2, player_step, id, i, deck[randint(0, 9)])
+            card = Card(x, y, player_step, j + 1, i, deck[randint(0, 9)])
             while card.typeCard.type in player_step.deck_type:
-                card = Card(x, y, 2, player_step, id, i, deck[randint(0, 9)])
+                card.die()
+                card = Card(x, y, player_step, j + 1, i, deck[randint(0, 9)])
             cards.append(card)
             player_step.deck_type.append(card.typeCard.type)
-            player_step.deck.append(card.typeCard)
+            player_step.deck.append(card)
             x += 100
         y = -80
         x = 100
-        id = 2
         player_step = player_2
 
     # Fields
@@ -373,6 +451,7 @@ def game():
                                 if player_step.mana_ob.mana >= card.coast:
                                     player_step.deck[card.id] = ''
                                     player_step.deck_type[card.id] = ''
+                                    player_step.deck_played[card.id] = card
                                     card.update(field.x + 2, field.y + 2)
                                     card.image_update()
                                     card.played = True
@@ -397,9 +476,27 @@ def game():
         if close_window:
             break
         
-        if time_count == 45 and game_round != 0:
-            for i in player_step.deck:
-                print(i.atk)
+        # Attack
+        if time_count == 45 and game_round > 1:
+            for i in range(len(player_step.deck_played)):
+                if player_1 == player_step:
+                    p1 = player_2
+                else:
+                    p1 = player_1
+                
+                el2 = player_step.deck_played[i]
+                if el2 != '':
+                    if el2.played:
+                        if p1.deck_played[i] == '':
+                            p1.hp_ob.hp -= el2.typeCard.atk
+                            clouds.position(p1.hp_ob.pos_x, p1.hp_ob.pos_y + 2)
+                            clouds.action = True
+                        else:
+                            p1.deck_played[i].typeCard.hp -= el2.typeCard.atk
+                            if p1.deck_played[i].typeCard.hp <= 0:
+                                p1.deck_played[i].die()
+                                p1.deck_played[i] = ''
+
             time_count -= 1
         
         # Give cards
@@ -415,13 +512,13 @@ def game():
                         id = 2
 
                     # No repeating cards
-                    card = Card(x + (100 * el), y, 2, player_step, id, el, deck[randint(0, 9)])
+                    card = Card(x + (100 * el), y, player_step, id, el, deck[randint(0, 9)])
                     while card in cards:
-                        card = Card(x + (100 * el), y, 2, player_step, id, el, deck[randint(0, 9)])
+                        card = Card(x + (100 * el), y, player_step, id, el, deck[randint(0, 9)])
 
                     cards.append(card)
                     player_step.deck_type[el] = card.typeCard.type
-                    player_step.deck[el] = card.typeCard
+                    player_step.deck[el] = card
 
                     time_count -= 1
                     break
@@ -440,11 +537,11 @@ def game():
             time_count = 45
 
         # Win or lose
-        if player_1.hp_ob.hp == 0 or player_2.hp_ob.hp == 0:
+        if player_1.hp_ob.hp <= 0 or player_2.hp_ob.hp <= 0:
             cards = []
             # Draw Screen
             font_end = pygame.font.Font(None, 40)
-            if player_1.hp_ob.hp == 0:
+            if player_1.hp_ob.hp <= 0:
                 screen.fill((20, 20, 20))
                 fon = pygame.transform.scale(load_image('gameover_screen.png'), (w, h))
                 screen.blit(fon, (0, 0))
@@ -455,58 +552,65 @@ def game():
             
             if not game_end:
                 # Connect
-                con = sqlite3.connect("data/Database/users.db")
-                loses = con.cursor().execute("""SELECT lose FROM users
-                WHERE username = ?""", (user,)).fetchone()[0]
-                wins = con.cursor().execute("""SELECT win FROM users
-                WHERE username = ?""", (user,)).fetchone()[0]
-                level = con.cursor().execute("""SELECT level FROM users
-                WHERE username = ?""", (user,)).fetchone()[0]
+                try:
+                    con = sqlite3.connect("data/Database/users.db")
+                    loses = con.cursor().execute("""SELECT lose FROM users
+                    WHERE username = ?""", (user,)).fetchone()[0]
+                    wins = con.cursor().execute("""SELECT win FROM users
+                    WHERE username = ?""", (user,)).fetchone()[0]
+                    level = con.cursor().execute("""SELECT level FROM users
+                    WHERE username = ?""", (user,)).fetchone()[0]
 
-                if player_1.hp_ob.hp == 0:
-                    if loses:
-                        loses += 1
-                    else:
-                        loses = 1
-                    con.cursor().execute("""UPDATE users
-                    SET lose = ?
-                    WHERE username = ?""", (loses, user))
+                    if player_1.hp_ob.hp == 0:
+                        if loses:
+                            loses += 1
+                        else:
+                            loses = 1
+                        con.cursor().execute("""UPDATE users
+                        SET lose = ?
+                        WHERE username = ?""", (loses, user))
+                    
+                    if player_2.hp_ob.hp == 0:
+                        if wins:
+                            wins += 1
+                        else:
+                            wins = 1
+
+                        if level:
+                            level += 0.5
+                        else:
+                            level = 0.5
+
+                        con.cursor().execute("""UPDATE users
+                        SET win = ?, level = ?
+                        WHERE username = ?""", (wins, level, user))
+                    
+                    con.commit()
+                    con.close()
+                except Exception:
+                    pass
                 
-                if player_2.hp_ob.hp == 0:
-                    if wins:
-                        wins += 1
-                    else:
-                        wins = 1
-
-                    if level:
-                        level += 0.5
-                    else:
-                        level = 0.5
-
-                    con.cursor().execute("""UPDATE users
-                    SET win = ?, level = ?
-                    WHERE username = ?""", (wins, level, user))
-                
-                con.commit()
-                con.close()
                 game_end = True
             
             # Draw objects
-            lable = ['user: ' + str(user), 'level: ' + str(level), 'wins: ' + str(wins), 'loses: ' + str(loses)]
-            top = 20
-            for i in range(4):
-                font_text = font_end.render(lable[i], 1, pygame.Color('Snow'))
-                font_rect = font_text.get_rect()
-                font_rect.top = top
-                top += 30
-                font_rect.x = 700
-                screen.blit(font_text, font_rect)
+            try:
+                lable = ['user: ' + str(user), 'level: ' + str(level), 'wins: ' + str(wins), 'loses: ' + str(loses)]
+                top = 20
+                for i in range(4):
+                    font_text = font_end.render(lable[i], 1, pygame.Color('Snow'))
+                    font_rect = font_text.get_rect()
+                    font_rect.top = top
+                    top += 30
+                    font_rect.x = 700
+                    screen.blit(font_text, font_rect)
+            except Exception:
+                pass
 
             buttons_sprite.draw(screen)
         else:
             # Screen
             screen.fill((20, 20, 20))
-            fon = pygame.transform.scale(load_image('hearthstone_desk.jpg'), (w, h))
+            fon = pygame.transform.scale(board, (w, h))
             screen.blit(fon, (0, 0))
 
             # Draw objects
@@ -519,6 +623,16 @@ def game():
             player_1.mana_ob.mana_show()
             player_2.hp_ob.hp_show()
             player_2.mana_ob.mana_show()
+
+            # Cards
+            for i in cards:
+                if i != '':
+                    try:
+                        i.hp_show()
+                        i.atk_show()
+                        i.mana_show()
+                    except Exception:
+                        pass
 
             if clouds.action:
                 clouds.update()

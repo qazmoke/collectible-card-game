@@ -1,5 +1,5 @@
 import pygame, sys, os
-from Game import game
+from Game import start_screen
 from Rules import rules
 from Options import option
 
@@ -122,7 +122,7 @@ def main():
                         transparency()
                     btn_start.action = False
                     btn_start.image = load_image('Button_start_1.png', -1)
-                    game()
+                    start_screen()
 
                     # Screen
                     screen.fill((20, 20, 20))
