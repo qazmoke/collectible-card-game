@@ -263,6 +263,7 @@ def start_screen():
     screen.blit(fon, (0, 0))
 
     all_sprites = pygame.sprite.Group()
+    close_win = False
 
     # Buttons
     btn_1 = Button(108, 50, 3, all_sprites)
@@ -286,6 +287,7 @@ def start_screen():
                     board = load_image('hearthstone_desk.jpg')
                     player_hp = 45
                     game()
+                    close_win = True
                 
                 if btn_2.action:
                     for i in range(11):
@@ -298,6 +300,8 @@ def start_screen():
                     player_hp = 25
                     game()
 
+        if close_win:
+            break
     
         all_sprites.draw(screen)
         pygame.display.flip()
