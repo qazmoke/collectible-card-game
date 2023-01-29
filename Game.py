@@ -18,6 +18,7 @@ card_sprites = pygame.sprite.Group()
 buttons_sprite = pygame.sprite.Group()
 hp_sprites = pygame.sprite.Group()
 mana_sprites = pygame.sprite.Group()
+act_sprite = pygame.sprite.Group()
 
 # Cards
 deck = [Cards_E.Shiny(atk=2, hp=5, type=9), Cards_E.Mutant(atk=3, type=10), Cards_E.Nothing(atk=3, type=13), Cards_E.Oboroten(atk=4, type=6), Cards_E.True_Vamp(atk=4, type=12),
@@ -70,6 +71,10 @@ class Button(pygame.sprite.Sprite):
             self.image = load_image('Button_clasik.png', -1)
         if num == 4:
             self.image = load_image('Button_fast.png', -1)
+        if num == 5:
+            self.image = load_image('Button_act.png', -1)
+        if num == 6:
+            self.image = load_image('Button_act_2.png', -1)
 
         # Number of button and its activity
         self.num = num
@@ -94,6 +99,10 @@ class Button(pygame.sprite.Sprite):
                 self.image = load_image('Button_clasik_2.png', -1)
             if self.num == 4:
                 self.image = load_image('Button_fast_2.png', -1)
+            if self.num == 5:
+                self.image = load_image('Button_act_1_2.png', -1)
+            if self.num == 6:
+                self.image = load_image('Button_act_2_2.png', -1)
 
             self.action = True
 
@@ -254,6 +263,13 @@ class Player:
         self.mana_ob = Mana(mana, pos_mana[0], pos_mana[-1])
 
 
+class Text_Box():
+    def __init__(self, x, y, w, h):
+        self.box = pygame.Rect(x, y, w, h)
+        self.activate = False
+        self.text = ''
+
+
 # Выбор режима
 def start_screen():
     global player_hp, board
@@ -352,6 +368,8 @@ def game():
     # Button
     btn_back = Button(700, 600, 1, buttons_sprite)
     btn_step = Button(w - 130, 275, 2, all_sprites)
+    btn_act_1 = Button(140, 200, 5, act_sprite)
+    btn_act_2 = Button(140, 300, 6, act_sprite)
 
     # Timer
     time_count = 45
@@ -370,6 +388,10 @@ def game():
     close_window = False
     player_step = player_1
     mana = 10
+
+    # Info
+    info = ''
+    info_font = pygame.font.SysFont(None, 40)
 
     clock = pygame.time.Clock()
     
@@ -395,8 +417,31 @@ def game():
                     player_step.mana_ob.mana = mana
                     game_round += 1
                     time_count = 45
+            
+            # LEFT CLICK
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # Card action
+                if player_step == player_1:
+                    for button in act_sprite:
+                        if card:
+                            if card.typeCard.flag == 1:
+                                button.action = True
+                                if button.num == 5:
+                                    try:
+                                        player_step.mana_ob.mana = card.typeCard.act1(player_step.mana_ob.mana)
+                                    except Exception:
+                                        pass
+                                else:
+                                    try:
+                                        player_step.mana_ob.mana = card.typeCard.act2(player_step.mana_ob.mana)
+                                    except Exception:
+                                        pass
+                                card.typeCard.flag = 0
+
+                if info:
+                    card = ''
+                    info = ''
                 
-            if event.type == pygame.MOUSEBUTTONDOWN:
                 for button in buttons_sprite:
                     buttons_sprite.update(event)
                 
@@ -421,7 +466,27 @@ def game():
                 else:
                     if not moved:
                         card = ''
-            if event.type == pygame.MOUSEBUTTONUP:
+            
+            # RIGHT CLICK
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                if not moved:
+                    for card in cards:
+                        if not card.played:
+                            if card.typeCard.flag == 1:
+                                if player_step == player_1:
+                                    if card.player == player_step:
+                                        if card.collide(event):
+                                            info = Text_Box(0, 0, 340, 400)
+                                            info.text = [f'Урон: {card.typeCard.atk}', f'Мана: {card.typeCard.act1_mana}', f'Здоровье: {card.typeCard.hp}']
+                                            break
+                if not info:
+                    card = ''
+            
+            # LEFT CLICK
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                if info:
+                    card = ''
+                    info = ''
                 # Exit
                 if btn_back.action and game_end:
                     for i in range(11):
@@ -637,13 +702,33 @@ def game():
                         i.mana_show()
                     except Exception:
                         pass
-
+            
+            # Animation
             if clouds.action:
                 clouds.update()
-
+            
+            # Timer show
             if time_count <= 10:
                 text_rect = text_time.get_rect(center = screen.get_rect().center)
                 screen.blit(text_time, text_rect)
+            
+            # Card Info
+            if info:
+                pygame.draw.rect(screen, pygame.Color('#734222'), info.box)
+                pygame.draw.rect(screen, pygame.Color('black'), info.box, 10)
+                top = 10
+                for el in info.text:
+                    font_text = info_font.render(el, 1, pygame.Color('Snow'))
+                    font_rect = font_text.get_rect()
+                    font_rect.top = top
+                    top += 40
+                    font_rect.x = 140
+                    screen.blit(font_text, font_rect)
+                rect = card.image.get_rect()
+                rect.x = 10
+                rect.y = 10
+                act_sprite.draw(screen)
+                screen.blit(card.image, rect)
 
         clock.tick(fps)
         pygame.display.flip()
