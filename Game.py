@@ -425,18 +425,43 @@ def game():
                     for button in act_sprite:
                         if card:
                             if card.typeCard.flag == 1:
-                                button.action = True
-                                if button.num == 5:
-                                    try:
-                                        player_step.mana_ob.mana = card.typeCard.act1(player_step.mana_ob.mana)
-                                    except Exception:
-                                        pass
-                                else:
-                                    try:
-                                        player_step.mana_ob.mana = card.typeCard.act2(player_step.mana_ob.mana)
-                                    except Exception:
-                                        pass
-                                card.typeCard.flag = 0
+                                button.update(event)
+                                if button.action:
+                                    if button.num == 5:
+                                        try:
+                                            t = card.typeCard.act1(player_step.mana_ob.mana)
+                                            if t == 'poison':
+                                                pass
+                                            if t == 'afraid':
+                                                pass
+                                            if t == 'vigilant':
+                                                pass
+                                            if t == 'bleeding':
+                                                    pass
+                                            if t == 'shine':
+                                                    pass
+                                            if t == 'proteck':
+                                                    pass
+                                        except Exception:
+                                            pass
+                                    if button.num == 6:
+                                        try:
+                                            t = card.typeCard.act1(player_step.mana_ob.mana)
+                                            if t == 'poison':
+                                                pass
+                                            if t == 'afraid':
+                                                pass
+                                            if t == 'vigilant':
+                                                pass
+                                            if t == 'bleeding':
+                                                    pass
+                                            if t == 'shine':
+                                                    pass
+                                            if t == 'proteck':
+                                                    pass
+                                        except Exception:
+                                            pass
+                                    card.typeCard.flag = 0
 
                 if info:
                     card = ''
@@ -716,6 +741,9 @@ def game():
             if info:
                 pygame.draw.rect(screen, pygame.Color('#734222'), info.box)
                 pygame.draw.rect(screen, pygame.Color('black'), info.box, 10)
+
+                info_font = pygame.font.SysFont(None, 40)
+
                 top = 10
                 for el in info.text:
                     font_text = info_font.render(el, 1, pygame.Color('Snow'))
@@ -724,6 +752,17 @@ def game():
                     top += 40
                     font_rect.x = 140
                     screen.blit(font_text, font_rect)
+                
+                info_font = pygame.font.SysFont(None, 23)
+
+                for el in [card.typeCard.txt1, card.typeCard.txt2]:
+                    font_text = info_font.render(el, 1, pygame.Color('Snow'))
+                    font_rect = font_text.get_rect()
+                    font_rect.top = top
+                    top += 40
+                    font_rect.x = 145
+                    screen.blit(font_text, font_rect)
+
                 rect = card.image.get_rect()
                 rect.x = 10
                 rect.y = 10
