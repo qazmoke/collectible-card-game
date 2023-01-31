@@ -21,8 +21,8 @@ mana_sprites = pygame.sprite.Group()
 act_sprite = pygame.sprite.Group()
 
 # Cards
-deck = [Cards_E.Shiny(atk=2, hp=5, type=9), Cards_E.Mutant(atk=3, type=10), Cards_E.Nothing(atk=3, type=13), Cards_E.Oboroten(atk=4, type=6), Cards_E.True_Vamp(atk=4, type=12),
-Cards_E.Shadow(atk=1, type=1), Cards_E.Stradauschii(atk=6, type=2), Cards_E.Silf(atk=7, type=7), Cards_E.Oilus(atk=2, type=8), Cards_E.Rodia(atk=8, type=11)]
+deck = [Cards_E.Shiny(atk=2, hp=9, type=9), Cards_E.Mutant(atk=3, hp=7, type=10), Cards_E.Nothing(atk=3, type=13), Cards_E.Oboroten(atk=4, hp=5, type=6), Cards_E.True_Vamp(atk=4, type=12),
+Cards_E.Shadow(atk=1, type=1), Cards_E.Stradauschii(atk=6, type=2), Cards_E.Silf(atk=7, hp=11, type=7), Cards_E.Oilus(atk=2, type=8), Cards_E.Rodia(atk=8, hp=2, type=11)]
 
 
 # Function to close a window
@@ -99,10 +99,10 @@ class Button(pygame.sprite.Sprite):
                 self.image = load_image('Button_clasik_2.png', -1)
             if self.num == 4:
                 self.image = load_image('Button_fast_2.png', -1)
-            if self.num == 5:
-                self.image = load_image('Button_act_1_2.png', -1)
-            if self.num == 6:
-                self.image = load_image('Button_act_2_2.png', -1)
+            # if self.num == 5:
+            #     self.image = load_image('Button_act_1_2.png', -1)
+            # if self.num == 6:
+            #     self.image = load_image('Button_act_2_2.png', -1)
 
             self.action = True
 
@@ -124,6 +124,10 @@ class Card(pygame.sprite.Sprite):
 
         # Characteristic
         self.player = player
+        if card.hp < 0:
+            card.hp *= -1
+        if card.atk < 0:
+            card.atk *= -1
         self.typeCard = card
         self.played = False
         self.coast = card.act1_mana
@@ -161,13 +165,15 @@ class Card(pygame.sprite.Sprite):
 
 
 class Field:
-    def __init__(self, point_1, point_2, color, player):
+    def __init__(self, point_1, point_2, color, player, id):
         self.rect = pygame.Rect(point_1, point_2)
         # Characteristic
         self.x = point_1[0]
         self.y = point_1[-1]
         self.color = color
         self.activate = False
+        self.card_activate = ''
+        self.id = id
         self.player = player
 
     def collide(self, *args):
@@ -230,6 +236,10 @@ class Health(pygame.sprite.Sprite):
             font = pygame.font.Font(None, 40)
             screen.blit(font.render(str(self.hp), 1, pygame.Color('black')), (self.pos_x + 40, self.pos_y + 25))
 
+    def update(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
+
 
 class Mana(pygame.sprite.Sprite):
     def __init__(self, mana, pos_x, pos_y):
@@ -249,6 +259,10 @@ class Mana(pygame.sprite.Sprite):
             font = pygame.font.Font(None, 40)
             screen.blit(font.render(str(self.mana), 1, pygame.Color('black')), (self.pos_x + 44, self.pos_y + 40))
 
+    def update(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
+
 
 class Player:
     def __init__(self, pos_hp, pos_mana, hp, mana, user=None):
@@ -258,6 +272,8 @@ class Player:
         self.deck_played = ['', '', '', '', '']
         self.deck = []
         self.user = user
+        self.pos_hp = pos_hp
+        self.pos_mana = pos_mana
 
         self.hp_ob = Health(hp, pos_hp[0], pos_hp[-1])
         self.mana_ob = Mana(mana, pos_mana[0], pos_mana[-1])
@@ -334,6 +350,10 @@ def game():
     # Cards
     cards = []
 
+    # Variables
+    choose = False
+    act_text = ''
+
     x = 100
     y = 550
     player_step = player_1
@@ -359,7 +379,7 @@ def game():
     player_step = player_2
     for j in range(2):
         for i in range(5):
-            fields.append(Field((x, y), (130, 183), (189, 183, 107), player_step))
+            fields.append(Field((x, y), (130, 183), (189, 183, 107), player_step, i))
             x += 150
         y = 325
         x = 70
@@ -388,6 +408,9 @@ def game():
     close_window = False
     player_step = player_1
     mana = 10
+
+    # Card act
+    act_font = pygame.font.SysFont(None, 80)
 
     # Info
     info = ''
@@ -421,47 +444,64 @@ def game():
             # LEFT CLICK
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 # Card action
-                if player_step == player_1:
-                    for button in act_sprite:
-                        if card:
-                            if card.typeCard.flag == 1:
-                                button.update(event)
-                                if button.action:
-                                    if button.num == 5:
-                                        try:
-                                            t = card.typeCard.act1(player_step.mana_ob.mana)
-                                            if t == 'poison':
-                                                pass
-                                            if t == 'afraid':
-                                                pass
-                                            if t == 'vigilant':
-                                                pass
-                                            if t == 'bleeding':
-                                                    pass
-                                            if t == 'shine':
-                                                    pass
-                                            if t == 'proteck':
-                                                    pass
-                                        except Exception:
-                                            pass
-                                    if button.num == 6:
-                                        try:
-                                            t = card.typeCard.act1(player_step.mana_ob.mana)
-                                            if t == 'poison':
-                                                pass
-                                            if t == 'afraid':
-                                                pass
-                                            if t == 'vigilant':
-                                                pass
-                                            if t == 'bleeding':
-                                                    pass
-                                            if t == 'shine':
-                                                    pass
-                                            if t == 'proteck':
-                                                    pass
-                                        except Exception:
-                                            pass
-                                    card.typeCard.flag = 0
+                for button in act_sprite:
+                    if card:
+                        if card.typeCard.flag == 1:
+                            button.update(event)
+                            if button.action:
+                                if button.num == 5:
+                                    try:
+                                        # Action choose
+                                        t = card.typeCard.act1(player_step.mana_ob.mana)
+                                        if t == 'poison':
+                                            if player_step == player_1:
+                                                player_2.hp_ob.hp -= 2
+                                            else:
+                                                player_1.hp_ob.hp -= 2
+                                        if t == 'afraid':
+                                            if player_step == player_1:
+                                                player_1.hp_ob.hp += 2
+                                            else:
+                                                player_2.hp_ob.hp += 2
+                                        if t == 'vigilant':
+                                            choose = True
+                                            act_text = 'Выберите карту'
+                                        if t == 'bleeding':
+                                            choose = True
+                                            act_text = 'Выберите карту'
+                                        if t == 'shine':
+                                            card.typeCard.atk += 1
+                                        if t == 'proteck':
+                                            card.typeCard.hp += 2
+                                    except Exception:
+                                        pass
+                                if button.num == 6:
+                                    try:
+                                        t = card.typeCard.act1(player_step.mana_ob.mana)
+                                        if t == 'poison':
+                                            if player_step == player_1:
+                                                player_2.hp_ob.hp -= 2
+                                            else:
+                                                player_1.hp_ob.hp -= 2
+                                        if t == 'afraid':
+                                            if player_step == player_1:
+                                                player_1.hp_ob.hp += 2
+                                            else:
+                                                player_2.hp_ob.hp += 2
+                                        if t == 'vigilant':
+                                            choose = True
+                                            act_text = 'Выберите карту'
+                                        if t == 'bleeding':
+                                            choose = True
+                                            act_text = 'Выберите карту'
+                                        if t == 'shine':
+                                            card.typeCard.atk += 1
+                                        if t == 'proteck':
+                                            card.typeCard.hp += 2
+                                    except Exception:
+                                        pass
+                                card.typeCard.flag = 0
+                                button.action = False
 
                 if info:
                     card = ''
@@ -471,7 +511,7 @@ def game():
                     buttons_sprite.update(event)
                 
                 for el in all_sprites:
-                    if el.__class__ == Button and player_step == player_1:
+                    if el.__class__ == Button:
                         el.update(event)
                 
                 for card in cards:
@@ -488,6 +528,43 @@ def game():
                                     past_y = event.pos[1] - card.rect.y
                                     moved = True
                                     break
+                            
+                            # Action card choose
+                            if card.player == player_2:
+                                if card.collide(event):
+                                    if choose and t:
+                                        if t == 'vigilant':
+                                            card.typeCard.atk -= 1
+                                        if t == 'bleeding':
+                                            card.typeCard.hp -= 2
+                                        
+                                        t = ''
+                                        act_text = ''
+                                        choose = False
+
+                        if player_step == player_2:
+                            # Right player need
+                            if card.player == player_step:
+                                if card.collide(event):
+                                    old_x = card.rect.x
+                                    old_y = card.rect.y
+                                    past_x = event.pos[0] - card.rect.x
+                                    past_y = event.pos[1] - card.rect.y
+                                    moved = True
+                                    break
+
+                            # Action card choose
+                            if card.player == player_1:
+                                if card.collide(event):
+                                    if choose and t:
+                                        if t == 'vigilant':
+                                            card.typeCard.atk -= 1
+                                        if t == 'bleeding':
+                                            card.typeCard.hp -= 2
+                                        
+                                        t = ''
+                                        act_text = ''
+                                        choose = False
                 else:
                     if not moved:
                         card = ''
@@ -499,6 +576,13 @@ def game():
                         if not card.played:
                             if card.typeCard.flag == 1:
                                 if player_step == player_1:
+                                    if card.player == player_step:
+                                        if card.collide(event):
+                                            info = Text_Box(0, 0, 340, 400)
+                                            info.text = [f'Урон: {card.typeCard.atk}', f'Мана: {card.typeCard.act1_mana}', f'Здоровье: {card.typeCard.hp}']
+                                            break
+                                    
+                                if player_step == player_2:
                                     if card.player == player_step:
                                         if card.collide(event):
                                             info = Text_Box(0, 0, 340, 400)
@@ -522,7 +606,7 @@ def game():
                     close_window = True
 
                  # New round
-                if btn_step.action and player_step == player_1:
+                if btn_step.action:
                     btn_step.action = False
                     btn_step.image = load_image('button_step.png')
 
@@ -545,11 +629,12 @@ def game():
                                 if player_step.mana_ob.mana >= card.coast:
                                     player_step.deck[card.id] = ''
                                     player_step.deck_type[card.id] = ''
-                                    player_step.deck_played[card.id] = card
+                                    player_step.deck_played[field.id] = card
                                     card.update(field.x + 2, field.y + 2)
                                     card.image_update()
                                     card.played = True
                                     field.activate = True
+                                    field.card_activate = card
                                     clouds.position(player_step.mana_ob.pos_x, player_step.mana_ob.pos_y + 2)
                                     clouds.action = True
                                     player_step.mana_ob.mana -= card.coast
@@ -586,10 +671,41 @@ def game():
                             clouds.position(p1.hp_ob.pos_x, p1.hp_ob.pos_y + 2)
                             clouds.action = True
                         else:
-                            p1.deck_played[i].typeCard.hp -= el2.typeCard.atk
-                            if p1.deck_played[i].typeCard.hp <= 0:
-                                p1.deck_played[i].die()
-                                p1.deck_played[i] = ''
+                            for f in fields:
+                                if f.card_activate == p1.deck_played[i] and f.card_activate != '' and f.player != player_step:
+                                    p1.deck_played[i].typeCard.hp -= el2.typeCard.atk
+                                    if p1.deck_played[i].typeCard.hp <= 0:
+                                        p1.deck_played[i].die()
+                                        cards.remove(p1.deck_played[i])
+                                        f.activate = False
+                                        f.card_activate = ''
+                                        if p1.deck_played[i].typeCard.type == 1:
+                                            p1.deck_played[i].typeCard.hp = 10
+                                        if p1.deck_played[i].typeCard.type == 2:
+                                            p1.deck_played[i].typeCard.hp = 10
+                                        if p1.deck_played[i].typeCard.type == 3:
+                                            p1.deck_played[i].typeCard.hp = 10
+                                        if p1.deck_played[i].typeCard.type == 4:
+                                            p1.deck_played[i].typeCard.hp = 10
+                                        if p1.deck_played[i].typeCard.type == 5:
+                                            p1.deck_played[i].typeCard.hp = 10
+                                        if p1.deck_played[i].typeCard.type == 6:
+                                            p1.deck_played[i].typeCard.hp = 5
+                                        if p1.deck_played[i].typeCard.type == 7:
+                                            p1.deck_played[i].typeCard.hp = 11
+                                        if p1.deck_played[i].typeCard.type == 8:
+                                            p1.deck_played[i].typeCard.hp = 7
+                                        if p1.deck_played[i].typeCard.type == 9:
+                                            p1.deck_played[i].typeCard.hp = 9
+                                        if p1.deck_played[i].typeCard.type == 10:
+                                            p1.deck_played[i].typeCard.hp = 7
+                                        if p1.deck_played[i].typeCard.type == 11:
+                                            p1.deck_played[i].typeCard.hp = 2
+                                        if p1.deck_played[i].typeCard.type == 12:
+                                            p1.deck_played[i].typeCard.hp = 10
+                                        if p1.deck_played[i].typeCard.type == 13:
+                                            p1.deck_played[i].typeCard.hp = 3
+                                        p1.deck_played[i] = ''
 
             time_count -= 1
         
@@ -710,6 +826,17 @@ def game():
             # Draw objects
             for field in fields:
                 pygame.draw.rect(screen, field.color, field.rect, 5)
+            for i in cards:
+                if player_step == player_1:
+                    if i.player == player_1:
+                        i.image = i.typeCard.image
+                    else:
+                        i.image = pygame.transform.rotate(load_image('card.jpg', -1), 180)
+                else:
+                    if i.player == player_2:
+                        i.image = pygame.transform.rotate(i.typeCard.image, 180)
+                    else:
+                        i.image = load_image('card.jpg', -1)
             all_sprites.draw(screen)
 
             # Player
@@ -736,6 +863,14 @@ def game():
             if time_count <= 10:
                 text_rect = text_time.get_rect(center = screen.get_rect().center)
                 screen.blit(text_time, text_rect)
+
+            # Act show
+            if act_text:
+                font_text = act_font.render(act_text, 1, pygame.Color('White'))
+                font_rect = font_text.get_rect()
+                font_rect.top = h // 2
+                font_rect.x = w // 2 - 220
+                screen.blit(font_text, font_rect)
             
             # Card Info
             if info:
