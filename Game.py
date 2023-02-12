@@ -571,6 +571,10 @@ def game():
             
             # RIGHT CLICK
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                if info:
+                    card = ''
+                    info = ''
+                
                 if not moved:
                     for card in cards:
                         if not card.played:
@@ -578,6 +582,7 @@ def game():
                                 if player_step == player_1:
                                     if card.player == player_step:
                                         if card.collide(event):
+                                            print(card)
                                             info = Text_Box(0, 0, 340, 400)
                                             info.text = [f'Урон: {card.typeCard.atk}', f'Мана: {card.typeCard.act1_mana}', f'Здоровье: {card.typeCard.hp}']
                                             break
